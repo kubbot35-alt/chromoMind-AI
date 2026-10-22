@@ -24,7 +24,8 @@ export class AssistantApiService {
         title: t.title,
         status: t.status,
         priority: t.priority,
-        estimatedPomodoros: t.estimatedPomodoros,
+        estimatedMinutes: t.estimatedMinutes,
+        spentMinutes: t.spentMinutes,
       })),
       notes: notes.map(n => ({
         id: n.id,

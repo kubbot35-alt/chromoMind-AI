@@ -3,7 +3,7 @@ import { aiClient, hasGeminiApiKey } from './geminiClient.ts';
 
 interface ChatRequestBody {
   message: string;
-  tasks?: Array<{ id: string; title: string; status: string; priority: string; estimatedPomodoros: number }>;
+  tasks?: Array<{ id: string; title: string; status: string; priority: string; estimatedMinutes: number; spentMinutes: number }>;
   notes?: Array<{ id: string; title: string; content: string; category: string }>;
   activeTaskId?: string | null;
 }
@@ -27,14 +27,14 @@ export function assistantApiMiddleware(req: IncomingMessage, res: ServerResponse
         if (hasGeminiApiKey) {
           try {
             const systemPrompt = `Jesteś zaawansowanym osobistym asystentem produktywności "ChronoMind AI" wspierającym użytkownika w:
-1. Planowaniu i dekompozycji zadań (ustalanie priorytetów, szacowanie liczby sesji Pomodoro 25-minutowych).
-2. Zarządzaniu czasem i skupieniem (wskazywanie zadań do uruchomienia timera Pomodoro).
+1. Planowaniu i dekompozycji zadań (ustalanie priorytetów oraz szacowanie realistycznego czasu trwania w minutach, np. 15, 30, 45, 60, 90 min).
+2. Zarządzaniu czasem i skupieniem (wskazywanie zadań do uruchomienia sesji skupienia).
 3. Błyskawicznym wyszukiwaniu informacji i syntezie wiedzy z bazy notatek użytkownika.
 
 Bieżący kontekst użytkownika:
 - Istniejące zadania: ${JSON.stringify(tasksContext.slice(0, 15))}
 - Zapisane notatki / baza wiedzy: ${JSON.stringify(notesContext.slice(0, 15))}
-- Aktualne aktywne zadanie w Pomodoro: ${activeTaskId ? JSON.stringify(tasksContext.find(t => t.id === activeTaskId)) : 'Brak aktywnego zadania'}
+- Aktualne aktywne zadanie: ${activeTaskId ? JSON.stringify(tasksContext.find(t => t.id === activeTaskId)) : 'Brak aktywnego zadania'}
 
 Instrukcje dotyczące odpowiedzi:
 Zwróć odpowiedź WYŁĄCZNIE w formacie JSON (bez bloków markdown z potrójnymi apostrofami, sam czysty obiekt JSON) o następującej strukturze:
@@ -44,16 +44,16 @@ Zwróć odpowiedź WYŁĄCZNIE w formacie JSON (bez bloków markdown z potrójny
     {
       "title": "Tytuł zadania",
       "priority": "low" | "medium" | "high",
-      "estimatedPomodoros": liczba (1-6)
+      "estimatedMinutes": liczba minut (np. 15, 30, 45, 60, 90)
     }
   ],
-  "focusTaskId": "opcjonalne ID istniejącego zadania, jeśli użytkownik chciał je aktywować w Pomodoro",
+  "focusTaskId": "opcjonalne ID istniejącego zadania, jeśli użytkownik chciał je aktywować w zegarze skupienia",
   "searchedNotesMatches": [
     "opcjonalne ID pasujących notatek"
   ]
 }
-Jeśli użytkownik prosi o zaplanowanie czegoś, dodaj konkretne propozycje do "suggestedTasks".
-Jeśli zadaje pytanie o wiedzę, odpowiedz na podstawie notatek lub ogólnej wiedzy merytorycznej.`;
+Jeśli użytkownik prosi o zaplanowanie czegoś, dodaj konkretne propozycje do "suggestedTasks" z realnym czasem w minutach.
+Nie używaj słowa 'pomodoro' ani nienaturalnych liczników bloków; operuj wyłącznie na minutach i godzinach.`;
 
             const aiResponse = await aiClient.models.generateContent({
               model: 'gemini-3.8-flash',
@@ -78,7 +78,6 @@ Jeśli zadaje pytanie o wiedzę, odpowiedz na podstawie notatek lub ogólnej wie
               }));
               return;
             } catch {
-              // fallback if json parse of Gemini output fails
               res.statusCode = 200;
               res.end(JSON.stringify({
                 reply: text,
@@ -92,10 +91,10 @@ Jeśli zadaje pytanie o wiedzę, odpowiedz na podstawie notatek lub ogólnej wie
           }
         }
 
-        // Heuristic fallback rule engine if key is not set or network unavailable
+        // Heuristic fallback rule engine without any pomodoro jargon
         const lower = userPrompt.toLowerCase();
         let reply = '';
-        const suggestedTasks: Array<{ title: string; priority: 'low' | 'medium' | 'high'; estimatedPomodoros: number }> = [];
+        const suggestedTasks: Array<{ title: string; priority: 'low' | 'medium' | 'high'; estimatedMinutes: number }> = [];
         let focusTaskId: string | null = null;
         const searchedNotesMatches: string[] = [];
 
@@ -107,33 +106,33 @@ Jeśli zadaje pytanie o wiedzę, odpowiedz na podstawie notatek lub ogólnej wie
         }
 
         if (lower.includes('planuj') || lower.includes('zadanie') || lower.includes('dodaj') || lower.includes('zrób') || lower.includes('projekt')) {
-          reply = `Przeanalizowałem Twoje plany. Przygotowałem propozycje zadań z podziałem na sesje Pomodoro, aby ułatwić realizację krok po kroku.`;
-          if (lower.includes('raport') || lower.includes('prezentacj')) {
+          reply = `Przeanalizowałem Twoje plany i przygotowałem propozycje zadań z oszacowanym czasem trwania w minutach, aby ułatwić ich realizację.`;
+          if (lower.includes('urząd') || lower.includes('formalno') || lower.includes('wniosek') || lower.includes('podat')) {
             suggestedTasks.push(
-              { title: 'Zebranie kluczowych danych i wstępny szkic', priority: 'high', estimatedPomodoros: 2 },
-              { title: 'Opracowanie podsumowania i wniosków', priority: 'medium', estimatedPomodoros: 2 },
-              { title: 'Korekta i formatowanie finalnego dokumentu', priority: 'low', estimatedPomodoros: 1 }
+              { title: 'Pobranie i wypełnienie formularza wniosku', priority: 'high', estimatedMinutes: 20 },
+              { title: 'Dołączenie wymaganych załączników i podpis Profilem Zaufanym', priority: 'high', estimatedMinutes: 15 },
+              { title: 'Pobranie potwierdzenia wysyłki (UPP) i archiwizacja', priority: 'low', estimatedMinutes: 10 }
             );
-          } else if (lower.includes('kod') || lower.includes('programow') || lower.includes('aplikacj') || lower.includes('refaktor')) {
+          } else if (lower.includes('dom') || lower.includes('porządk') || lower.includes('zakup')) {
             suggestedTasks.push(
-              { title: 'Analiza architektury i projekt interfejsów', priority: 'high', estimatedPomodoros: 2 },
-              { title: 'Implementacja logiki domenowej (SRP)', priority: 'high', estimatedPomodoros: 3 },
-              { title: 'Testy jednostkowe i weryfikacja poprawności', priority: 'medium', estimatedPomodoros: 2 }
+              { title: 'Przygotowanie listy zakupów lub planu porządków', priority: 'medium', estimatedMinutes: 15 },
+              { title: 'Główna realizacja spraw domowych', priority: 'medium', estimatedMinutes: 45 },
+              { title: 'Krótkie podsumowanie i odhaczenie zadań', priority: 'low', estimatedMinutes: 15 }
             );
           } else {
             suggestedTasks.push(
-              { title: `Doprecyzowanie założeń: ${userPrompt.slice(0, 35)}...`, priority: 'high', estimatedPomodoros: 1 },
-              { title: 'Główny blok roboczy (Deep Work)', priority: 'high', estimatedPomodoros: 2 },
-              { title: 'Przegląd wyników i podsumowanie', priority: 'low', estimatedPomodoros: 1 }
+              { title: `Doprecyzowanie celu: ${userPrompt.slice(0, 35)}...`, priority: 'high', estimatedMinutes: 20 },
+              { title: 'Główny blok realizacji (skupienie)', priority: 'high', estimatedMinutes: 45 },
+              { title: 'Weryfikacja efektów i podsumowanie', priority: 'low', estimatedMinutes: 15 }
             );
           }
-        } else if (lower.includes('pomodoro') || lower.includes('skup') || lower.includes('czas') || lower.includes('zacznij')) {
+        } else if (lower.includes('skup') || lower.includes('stoper') || lower.includes('timer') || lower.includes('czas') || lower.includes('zacznij')) {
           const firstTodo = tasksContext.find(t => t.status !== 'completed');
           if (firstTodo) {
             focusTaskId = firstTodo.id;
-            reply = `Ustawiłem zadanie "${firstTodo.title}" jako aktywne w liczniku Pomodoro. Kliknij 'Start', aby rozpocząć 25-minutowy blok głębokiego skupienia.`;
+            reply = `Ustawiłem zadanie "${firstTodo.title}" jako aktywne w zegarze skupienia. Możesz rozpocząć pracę nad nim z poziomu widoku skupienia.`;
           } else {
-            reply = `Twój zegar Pomodoro jest gotowy. Wybierz lub utwórz najpierw zadanie, aby powiązać z nim sesję skupienia.`;
+            reply = `Twój zegar skupienia jest gotowy. Wybierz lub utwórz najpierw zadanie, aby powiązać z nim sesję pracy.`;
           }
         } else if (lower.includes('szukaj') || lower.includes('notatk') || lower.includes('wiedz') || searchedNotesMatches.length > 0) {
           if (searchedNotesMatches.length > 0) {
@@ -141,12 +140,12 @@ Jeśli zadaje pytanie o wiedzę, odpowiedz na podstawie notatek lub ogólnej wie
               .filter(n => searchedNotesMatches.includes(n.id))
               .map(n => `"${n.title}"`)
               .join(', ');
-            reply = `Znalazłem powiązane materiały w Twojej bazie wiedzy: ${matchedTitles}. Zapoznaj się z nimi w panelu Bazy Wiedzy.`;
+            reply = `Znalazłem powiązane materiały w Twojej bazie wiedzy: ${matchedTitles}. Możesz je przejrzeć w zakładce Baza Wiedzy.`;
           } else {
-            reply = `Przeszukałem bazę wiedzy. Nie znalazłem bezpośredniego dopasowania do tego hasła, ale możesz zapisać nowe ustalenia jako notatkę za pomocą przycisku w panelu.`;
+            reply = `Przeszukałem bazę wiedzy. Nie znalazłem bezpośredniego dopasowania do tego hasła, ale możesz zapisać nowe ustalenia jako notatkę w sekcji Baza Wiedzy.`;
           }
         } else {
-          reply = `Cześć! Jestem Twoim asystentem ChronoMind. Pomogę Ci rozpisać zadania na interwały Pomodoro, zoptymalizować plan dnia oraz wyszukać informacje w Twoich notatkach. W czym mogę pomóc?`;
+          reply = `Cześć! Jestem Twoim asystentem ChronoMind. Pomogę Ci rozpisać zadania z realnym czasem trwania (minuty, godziny), zaplanować priorytety oraz wyszukać informacje w notatkach. W czym mogę pomóc?`;
         }
 
         res.statusCode = 200;

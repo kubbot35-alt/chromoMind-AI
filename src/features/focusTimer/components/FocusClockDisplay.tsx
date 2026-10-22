@@ -1,28 +1,21 @@
 import React from 'react';
-import type { PomodoroMode } from '../types/pomodoro.types.ts';
 
-interface PomodoroClockDisplayProps {
+interface FocusClockDisplayProps {
   formattedTime: string;
   progressRatio: number;
-  mode: PomodoroMode;
+  durationMinutes: number;
   isRunning: boolean;
 }
 
-export const PomodoroClockDisplay: React.FC<PomodoroClockDisplayProps> = ({
+export const FocusClockDisplay: React.FC<FocusClockDisplayProps> = ({
   formattedTime,
   progressRatio,
-  mode,
+  durationMinutes,
   isRunning,
 }) => {
   const radius = 105;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - progressRatio * circumference;
-
-  const modeConfig = {
-    work: { label: 'Blok głębokiego skupienia', color: '#FF6B35' },
-    short_break: { label: 'Krótka regeneracja (5m)', color: '#38BDF8' },
-    long_break: { label: 'Długa przerwa (15m)', color: '#34D399' },
-  }[mode];
 
   return (
     <div className="flex flex-col items-center justify-center relative my-4">
@@ -43,7 +36,7 @@ export const PomodoroClockDisplay: React.FC<PomodoroClockDisplayProps> = ({
             cx="120"
             cy="120"
             r={radius}
-            stroke={modeConfig.color}
+            stroke="#FF6B35"
             strokeWidth="10"
             strokeDasharray={circumference}
             strokeDashoffset={strokeDashoffset}
@@ -59,10 +52,10 @@ export const PomodoroClockDisplay: React.FC<PomodoroClockDisplayProps> = ({
             {formattedTime}
           </span>
           <span className="text-xs font-medium text-slate-300 mt-2 tracking-wide uppercase">
-            {modeConfig.label}
+            Sesja skupienia ({durationMinutes} min)
           </span>
           <span className="text-[11px] font-mono tabular-nums text-slate-400 mt-0.5">
-            {isRunning ? 'Odliczanie w toku' : 'Wstrzymany'}
+            {isRunning ? 'Czas płynie...' : 'Zegar wstrzymany'}
           </span>
         </div>
       </div>

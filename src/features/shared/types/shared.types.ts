@@ -1,4 +1,4 @@
-export type ActiveTab = 'tasks' | 'pomodoro' | 'knowledge' | 'assistant';
+export type ActiveTab = 'tasks' | 'focus' | 'knowledge' | 'assistant';
 
 export interface ToastNotification {
   id: string;

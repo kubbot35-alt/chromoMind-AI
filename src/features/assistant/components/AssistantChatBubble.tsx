@@ -1,17 +1,18 @@
 import React from 'react';
 import type { ChatMessage, SuggestedTaskItem } from '../types/assistant.types.ts';
+import { formatDuration } from '../../tasks/types/task.types.ts';
 import { Sparkles, User, Plus, Clock, Play } from 'lucide-react';
 
 interface AssistantChatBubbleProps {
   message: ChatMessage;
   onApplySuggestedTask?: (task: SuggestedTaskItem) => void;
-  onActivateTaskInPomodoro?: (taskId: string) => void;
+  onActivateTaskInFocus?: (taskId: string) => void;
 }
 
 export const AssistantChatBubble: React.FC<AssistantChatBubbleProps> = ({
   message,
   onApplySuggestedTask,
-  onActivateTaskInPomodoro,
+  onActivateTaskInFocus,
 }) => {
   const isUser = message.role === 'user';
 
@@ -43,7 +44,7 @@ export const AssistantChatBubble: React.FC<AssistantChatBubbleProps> = ({
           <div className="mt-3 pt-3 border-t border-slate-100 space-y-2">
             <p className="font-bold text-slate-900 flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5 text-[#FF6B35]" />
-              Zaproponowane zadania do planera:
+              Zaproponowane zadania z czasem trwania:
             </p>
             <div className="space-y-1.5">
               {message.suggestedTasks.map((task, idx) => (
@@ -54,7 +55,7 @@ export const AssistantChatBubble: React.FC<AssistantChatBubbleProps> = ({
                   <div className="min-w-0">
                     <p className="font-semibold text-slate-900 truncate">{task.title}</p>
                     <p className="text-[11px] text-slate-500 font-mono tabular-nums">
-                      Priorytet: {task.priority} · {task.estimatedPomodoros} pomodoro
+                      Priorytet: {task.priority} · Czas: {formatDuration(task.estimatedMinutes)}
                     </p>
                   </div>
                   {onApplySuggestedTask && (
@@ -74,16 +75,16 @@ export const AssistantChatBubble: React.FC<AssistantChatBubbleProps> = ({
         )}
 
         {/* Focus task suggestion action */}
-        {!isUser && message.focusTaskId && onActivateTaskInPomodoro && (
+        {!isUser && message.focusTaskId && onActivateTaskInFocus && (
           <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between">
-            <span className="text-[11px] text-slate-500">Zadanie gotowe do skupienia</span>
+            <span className="text-[11px] text-slate-500">Zadanie gotowe do pracy</span>
             <button
               type="button"
-              onClick={() => onActivateTaskInPomodoro(message.focusTaskId!)}
+              onClick={() => onActivateTaskInFocus(message.focusTaskId!)}
               className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-md transition-colors cursor-pointer"
             >
               <Play className="w-3 h-3 fill-current text-[#FF6B35]" />
-              <span>Przejdź do Pomodoro</span>
+              <span>Uruchom skupienie</span>
             </button>
           </div>
         )}

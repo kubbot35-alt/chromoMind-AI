@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import type { ChatMessage, SuggestedTaskItem } from '../types/assistant.types.ts';
 import type { Task } from '../../tasks/types/task.types.ts';
 import type { KnowledgeItem } from '../../knowledge/types/knowledge.types.ts';
-import { INITIAL_CHAT_MESSAGES } from '../../shared/constants/defaultData.ts';
+import { INITIAL_CHAT_MESSAGES } from '../../../data/initialData.ts';
 import { AssistantApiService } from '../services/assistantApiService.ts';
 
 export function useAssistant(
@@ -10,11 +10,11 @@ export function useAssistant(
   notes: KnowledgeItem[],
   activeTaskId: string | null,
   onApplySuggestedTask?: (task: SuggestedTaskItem) => void,
-  onActivateTaskInPomodoro?: (taskId: string) => void
+  onActivateTaskInFocus?: (taskId: string) => void
 ) {
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     try {
-      const saved = localStorage.getItem('chronomind_assistant_messages_v1');
+      const saved = localStorage.getItem('chronomind_assistant_messages_v2');
       return saved ? JSON.parse(saved) : INITIAL_CHAT_MESSAGES;
     } catch {
       return INITIAL_CHAT_MESSAGES;
@@ -26,7 +26,7 @@ export function useAssistant(
 
   const saveMessagesToStorage = (updated: ChatMessage[]) => {
     try {
-      localStorage.setItem('chronomind_assistant_messages_v1', JSON.stringify(updated.slice(-30)));
+      localStorage.setItem('chronomind_assistant_messages_v2', JSON.stringify(updated.slice(-30)));
     } catch (e) {
       console.warn('[useAssistant] Failed to save messages:', e);
     }
@@ -72,8 +72,8 @@ export function useAssistant(
       setMessages(finalMessages);
       saveMessagesToStorage(finalMessages);
 
-      if (response.focusTaskId && onActivateTaskInPomodoro) {
-        onActivateTaskInPomodoro(response.focusTaskId);
+      if (response.focusTaskId && onActivateTaskInFocus) {
+        onActivateTaskInFocus(response.focusTaskId);
       }
     } catch (err: unknown) {
       console.error('[useAssistant] API error:', err);
@@ -83,7 +83,7 @@ export function useAssistant(
       const fallbackMsg: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
         role: 'assistant',
-        content: `Przepraszam, wystąpił chwilowy problem z siecią. Możesz dodać zadanie ręcznie lub skorzystać z gotowych sugestii poniżej.`,
+        content: `Wystąpił chwilowy problem z siecią. Możesz dodać zadanie ręcznie lub wybrać jedną z gotowych propozycji poniżej.`,
         timestamp: new Date().toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' }),
         source: 'rule-engine',
       };
@@ -94,7 +94,7 @@ export function useAssistant(
     } finally {
       setIsLoading(false);
     }
-  }, [messages, isLoading, tasks, notes, activeTaskId, onActivateTaskInPomodoro]);
+  }, [messages, isLoading, tasks, notes, activeTaskId, onActivateTaskInFocus]);
 
   const clearChatHistory = useCallback(() => {
     setMessages(INITIAL_CHAT_MESSAGES);

@@ -1,7 +1,7 @@
 import type { KnowledgeItem } from '../types/knowledge.types.ts';
-import { INITIAL_KNOWLEDGE_ITEMS } from '../../shared/constants/defaultData.ts';
+import { INITIAL_KNOWLEDGE_ITEMS } from '../../../data/initialData.ts';
 
-const STORAGE_KEY = 'chronomind_knowledge_v1';
+const STORAGE_KEY = 'chronomind_knowledge_v2';
 
 export class KnowledgeStorageService {
   public static loadItems(): KnowledgeItem[] {

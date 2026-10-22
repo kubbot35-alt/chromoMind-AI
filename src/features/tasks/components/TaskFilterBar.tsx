@@ -93,7 +93,7 @@ export const TaskFilterBar: React.FC<TaskFilterBarProps> = ({
           >
             <option value="dueDate">Według terminu</option>
             <option value="priority">Według priorytetu</option>
-            <option value="pomodoros">Liczba pomodoro</option>
+            <option value="time">Czas trwania (od najdłuższego)</option>
             <option value="createdAt">Data dodania</option>
           </select>
           <ArrowUpDown className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />

@@ -8,7 +8,7 @@ interface TaskListProps {
   activeTaskId: string | null;
   onToggleStatus: (id: string) => void;
   onDelete: (id: string) => void;
-  onActivateInPomodoro: (id: string) => void;
+  onActivateInFocus: (id: string) => void;
   onOpenCreateModal: () => void;
   hasFilterActive: boolean;
 }
@@ -18,7 +18,7 @@ export const TaskList: React.FC<TaskListProps> = ({
   activeTaskId,
   onToggleStatus,
   onDelete,
-  onActivateInPomodoro,
+  onActivateInFocus,
   onOpenCreateModal,
   hasFilterActive,
 }) => {
@@ -54,10 +54,10 @@ export const TaskList: React.FC<TaskListProps> = ({
         <TaskItem
           key={task.id}
           task={task}
-          isActiveInPomodoro={activeTaskId === task.id}
+          isActiveInFocus={activeTaskId === task.id}
           onToggleStatus={onToggleStatus}
           onDelete={onDelete}
-          onActivateInPomodoro={onActivateInPomodoro}
+          onActivateInFocus={onActivateInFocus}
         />
       ))}
     </div>

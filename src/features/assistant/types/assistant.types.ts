@@ -1,7 +1,7 @@
 export interface SuggestedTaskItem {
   title: string;
   priority: 'low' | 'medium' | 'high';
-  estimatedPomodoros: number;
+  estimatedMinutes: number;
 }
 
 export interface ChatMessage {

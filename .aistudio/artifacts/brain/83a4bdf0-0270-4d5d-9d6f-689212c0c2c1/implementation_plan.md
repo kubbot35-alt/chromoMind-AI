@@ -1,69 +1,61 @@
-# ChronoMind AI – Asystent Produktywności, Planowania i Bazy Wiedzy
+# Refaktoryzacja ChronoMind: Naturalne Zarządzanie Czasem i Realistyczne Zadania
 
-Aplikacja hybrydowego pulpitu produktywności łącząca inteligentnego asystenta AI z interaktywnym planerem zadań, zintegrowanym zegarem Pomodoro oraz semantyczną bazą wiedzy, zbudowana w rygorze SOLID, SRP oraz modularnej architektury *package by feature*.
+Kompleksowy plan refaktoryzacji aplikacji mający na celu całkowite usunięcie pojęć związanych z cyklami „pomodoro”, wprowadzenie intuicyjnych jednostek czasu (minuty i godziny), wdrożenie elastycznego Timera Skupienia (Focus Timer) oraz uporządkowanie danych początkowych w nowym pliku `src/data/initialData.ts`.
 
 ### User Review & Critical Decisions
 
 > [!IMPORTANT]
-> Na podstawie Twoich odpowiedzi w etapie doprecyzowania wymagań ustaliliśmy następujące kluczowe decyzje:
-> - **Model interakcji**: Hybrydowy pulpit roboczy z asystentem czatowym i interaktywnym planerem (dwukolumnowy układ z pełną synchronizacją stanu).
-> - **Wyszukiwanie i wiedza**: Inteligentne przeszukiwanie bazy notatek i wiedzy użytkownika wraz z generowaniem syntezy odpowiedzi przez asystenta AI.
-> - **Zarządzanie czasem**: Licznik Pomodoro bezpośrednio połączony z aktywnym zadaniem (sesje skupienia, zliczanie interwałów, rejestracja postępów).
-> - **Zasady inżynieryjne**: Rygorystyczny podział SOLID (Single Responsibility Principle na poziomie pojedynczych plików serwisów, hooków i komponentów) oraz struktura *package by feature*.
+> Potwierdzone decyzje z etapu doprecyzowania:
+> - **Model zegara**: Dotychczasowy sztywny mechanizm Pomodoro (25/5 min) zostaje zastąpiony **elastycznym timerem skupienia (Focus Timer)** z możliwością wyboru dowolnego czasu (15, 25, 45, 60 min lub czas dokładnie odpowiadający szacunkowi wybranego zadania).
+> - **Wprowadzanie czasu trwania zadania**: Intuicyjny selektor łączący **szybkie przyciski minutowe** (15 min, 30 min, 45 min, 1h, 1.5h, 2h) z **polem własnej wartości w minutach**.
+> - **Baza danych początkowych**: Nowy plik `src/data/initialData.ts` z realistycznymi zadaniami z życia codziennego (praca, dom, urząd, rozwój) o zróżnicowanych czasach od 15 minut do 2-3 godzin.
 
 ---
 
 ### 1. Overview & Core Concept
 
-**ChronoMind AI** to centrum dowodzenia osobistą produktywnością, zaprojektowane dla profesjonalistów, programistów i twórców potrzebujących natychmiastowego przekształcania myśli i notatek w ustrukturyzowane zadania, harmonogram i skupione sesje pracy.
-
-- **Planer zadań**: Tworzenie, dekompozycja złożonych celów na podzadania z pomocą asystenta, szacowanie czasu trwania, kategoryzacja i ustalanie priorytetów.
-- **Zintegrowany Timer Pomodoro**: Połączenie aktywnego zadania z zegarem skupienia (25 min pracy / 5 min przerwy / długa przerwa), wizualny postęp, automatyczne odhaczanie sesji i statystyki czasu.
-- **Inteligentna Baza Wiedzy (Knowledge Engine)**: Zapisywanie notatek, artykułów i dokumentacji oraz błyskawiczne wyszukiwanie pełnotekstowe i kontekstowe z podpowiedziami asystenta AI.
-- **Asystent AI (Gemini 3.8 Flash)**: Działa w tle i w panelu czatu – potrafi na polecenie użytkownika wygenerować zadania, przypisać czas, streścić notatki oraz odpowiadać na pytania w oparciu o zebraną wiedzę.
+Aplikacja przekształca się w naturalny, przyjazny i elastyczny planer zadań osobistych i zawodowych:
+- **Naturalny czas trwania**: Każde zadanie posiada czytelny szacowany czas (`estimatedMinutes`) oraz licznik zarejestrowanego czasu (`spentMinutes`), prezentowane w czytelnym formacie (np. „45 min”, „1h 15 min”).
+- **Elastyczny Focus Timer**: Zegar skupienia pozwala na uruchomienie odliczania dopasowanego do aktualnego zadania lub wybranego bloku czasu, bez narzucania sztywnych przerw.
+- **Baza wiedzy i asystent**: Asystent AI i wyszukiwarka zostają zaktualizowane tak, aby operować wyłącznie na minutach i godzinach.
 
 ---
 
 ### 2. User Experience & Visual Design
 
-#### Dyscyplina kolorystyczna 60/30/10
-- **60% Głęboki Granat (Deep Midnight Navy)**:
-  - Tło aplikacji, boczne panele nawigacyjne, nagłówki kart, strefa skupienia: `#0A1128`, `#0E1A40`, `#14213D`.
-  - Daje profesjonalny, stonowany charakter wspierający koncentrację i redukujący zmęczenie wzroku.
-- **30% Czysta Biel i Jasny Kontrast (Pure White & Crisp Surfaces)**:
-  - Karty robocze, tła list zadań, pola edycji i treść notatek: `#FFFFFF` oraz subtelne chłodne odcienie `#F8FAFC`.
-  - Zapewnia maksymalną czytelność (standard WCAG AA 4.5:1+) dla tekstu, list i formularzy.
-- **10% Żywa Pomarańcza (Vibrant Energetic Accent)**:
-  - Wyrazisty akcent akcji: `#FF6B35` / `#F97316`.
-  - Zastosowany wyłącznie dla kluczowych punktów akcji: przycisk "Uruchom Pomodoro", aktywny wskaźnik timera, przyciski wysyłania asystenta, aktywne filtry i checkboxy zadań.
-
-#### Zasady Typografii i Anty-Slop
-- **Typografia**: Display/Nagłówki w wyrazistym, nowoczesnym kroju `Plus Jakarta Sans` / `Outfit`; ciało tekstu w czytelnym `DM Sans` / `Public Sans`; cyfry, czas i odliczenia Pomodoro w `JetBrains Mono` / `tabular-nums` dla absolutnej stabilności siatki.
-- **Zero-Pill Discipline**: Brak cukierkowych zaokrąglonych kapsułek na metadanych. Tagi, daty i czasy oddzielone subtelnymi separatorami typograficznymi (`·`, `/`).
-- **Pojedyncza linia kontrolek**: Przyciski i akcje zdefiniowane z `whitespace-nowrap shrink-0` i pełną obsługą stanów interaktywnych.
+#### UI i Formularze Zadań
+- **Wybór czasu w formularzu**:
+  - Pasek szybkich kafelków wyboru: `15m`, `30m`, `45m`, `1h (60m)`, `1.5h (90m)`, `2h (120m)`.
+  - Opcja wpisania dowolnej liczby minut z klawiatury dla nietypowych zadań.
+- **Karty zadań (Zero-Pill)**:
+  - Format metadanych: `Praca · Szacunek: 45 min · Przepracowano: 15 min · Termin: 24 paź`.
+  - Wskaźnik postępu czasu (pasek lub tekstowa proporcja).
+- **Górny pasek nawigacji**:
+  - Etykiety: `Planer zadań`, `Zegar skupienia`, `Baza wiedzy`, `Asystent AI`.
+- **Kolorystyka 60/30/10**:
+  - Zachowanie 60% głębokiego granatu (`#0A1128`), 30% czystej bieli dla kart i formularzy, 10% żywej pomarańczy (`#FF6B35`) dla akcji głównych.
 
 ---
 
 ### 3. Key Product Decisions & Trade-Offs
 
-1. **SOLID & Single Responsibility Principle (SRP)**:
-   - Każdy plik odpowiada za dokładnie jedno zadanie.
-   - Osobne serwisy do komunikacji z API Gemini (`geminiService.ts`).
-   - Osobne repozytoria danych z lokalną synchronizacją `localStorage` (`taskStorage.ts`, `noteStorage.ts`, `settingsStorage.ts`).
-   - Dedykowane hooki domenowe z wyłączną odpowiedzialnością (`usePomodoro.ts`, `useTasks.ts`, `useKnowledgeSearch.ts`, `useAssistantChat.ts`).
-   - Prezentacyjne komponenty atomowe i molekuły oddzielone od logiki biznesowej.
-
-2. **Struktura katalogów "Package by Feature"**:
-   - `src/features/tasks/`: modele, serwisy, hooki i komponenty planera zadań.
-   - `src/features/pomodoro/`: silnik timera, dźwięk/powiadomienie, widok skupienia.
-   - `src/features/knowledge/`: baza wiedzy, silnik wyszukiwania, notatki, filtry.
-   - `src/features/assistant/`: panel asystenta AI, integracja z Gemini, interpretacja komend użytkownika (np. "Zaplanuj mi pracę na dzisiaj", "Dodaj zadanie z 2 pomodoro").
-   - `src/features/shared/`: wspólne komponenty UI (nagłówek zgodny z Top Bar Contract, layout, ikony, modal, powiadomienia).
-
-3. **Architektura AI – Bezpieczne API Server-Side**:
-   - Serwer proxy Express wbudowany w środowisko (`/api/assistant/chat`, `/api/assistant/extract-tasks`), używający `@google/genai` z modelem `gemini-3.8-flash`.
-   - Klucz API `GEMINI_API_KEY` pozostaje wyłącznie po stronie serwera.
-   - W przypadku braku skonfigurowanego klucza API w środowisku lokalnym, asystent posiada inteligentny fallback regułowy (lokalne parsowanie komend i wyszukiwanie heurystyczne), gwarantując brak błędów.
+1. **Struktura danych początkowych (`src/data/initialData.ts`)**:
+   - Usunięcie fikcyjnych danych.
+   - Wprowadzenie 6-8 autentycznych zadań z różnych sfer życia:
+     - *Urzędowe*: Złożenie wniosku o dowód osobisty przez ePUAP (20 min, wysoki priorytet)
+     - *Praca*: Podsumowanie ustaleń po spotkaniu projektowym (45 min, średni priorytet)
+     - *Praca*: Przygotowanie oferty dla klienta i zestawienie kosztów (90 min, wysoki priorytet)
+     - *Dom*: Zamówienie filtrów do wody i środków czystości (15 min, niski priorytet)
+     - *Dom*: Umówienie przeglądu technicznego samochodu (15 min, średni priorytet)
+     - *Zdrowie*: Trening ogólnorozwojowy i rozciąganie (45 min, niski priorytet)
+     - *Rozwój*: Lektura artykułu o architekturze aplikacji internetowych (30 min, niski priorytet)
+2. **Architektura Focus Timer (`src/features/focusTimer`)**:
+   - Zmiana nazwy pakietu `pomodoro` na `focusTimer` lub refaktoryzacja w ramach tej samej ścieżki z czystym API.
+   - Zastąpienie sztywnego stanu `work | short_break | long_break` elastycznym trybem `focus` z konfigurowalnym czasem trwania (15m, 25m, 45m, 60m lub czas zadania).
+3. **Aktualizacja promptu i silnika asystenta AI**:
+   - Zmiana definicji w `src/server/assistantRouteHandler.ts` oraz `src/features/assistant`:
+   - Zamiast `estimatedPomodoros: number` -> `estimatedMinutes: number`.
+   - Podpowiedzi asystenta generują zadania w naturalnych minutach (np. 15, 30, 45, 60 min).
 
 ---
 
@@ -71,37 +63,52 @@ Aplikacja hybrydowego pulpitu produktywności łącząca inteligentnego asystent
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│                          ChronoMind Web App                            │
+│                        ChronoMind Refactored Architecture              │
 ├────────────────────────────────────────────────────────────────────────┤
-│  Top Bar: [Logo / Nazwa] ── [Zadania | Pomodoro | Baza Wiedzy] ── [CTA]│
+│  Top Bar: [Logo] ── [Zadania | Zegar Skupienia | Baza Wiedzy] ── [CTA] │
 ├──────────────────────────┬─────────────────────────────────────────────┤
 │   Interaktywny Planer    │             Asystent Kontekstowy            │
-│   & Moduły Robocze       │             (Panel Boczny / Czat)           │
+│   (Czas w minutach/godz) │             (Czas w min/godz)               │
 │                          │                                             │
 │  ┌────────────────────┐  │  ┌───────────────────────────────────────┐  │
-│  │ Aktywny Pomodoro   │  │  │ Historia dialogu i kontekstu zadań    │  │
-│  │ (połączone zadanie)│  │  │ "Dodaj zadanie Napisz raport..."     │  │
+│  │ Zegar Skupienia    │  │  │ Czat i sugestie zadań w minutach      │  │
+│  │ (15m/30m/45m/zad.) │  │  │ "Dodaj zadanie Złóż wniosek (20m)"    │  │
 │  └────────────────────┘  │  └───────────────────────────────────────┘  │
 │  ┌────────────────────┐  │  ┌───────────────────────────────────────┐  │
-│  │ Lista Zadań        │  │  │ Pole wprowadzania z szybkimi akcjami  │  │
-│  │ (priorytety/stany) │  │  │ [Zaplanuj dzień] [Szukaj w notatkach] │  │
-│  └────────────────────┘  │  └───────────────────────────────────────┘  │
-│  ┌────────────────────┐  │                                             │
-│  │ Baza Wiedzy        │  │                                             │
-│  │ (szybka wyszukiw.) │  │                                             │
+│  │ Zadania z realnymi │  │  │ Szybkie prompty i wyszukiwanie        │  │
+│  │ czasami i deadlin. │  │  └───────────────────────────────────────┘  │
 │  └────────────────────┘  │                                             │
 ├──────────────────────────┴─────────────────────────────────────────────┤
-│  Feature Packages: /tasks, /pomodoro, /knowledge, /assistant, /shared   │
-│  Storage Layer: LocalStorage Repository + Server Proxy (/api/assistant) │
+│  Data Layer: src/data/initialData.ts (realistyczne zadania i notatki)  │
+│  Feature Packages: /tasks, /focusTimer, /knowledge, /assistant         │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-#### Encje Danych:
-- `Task`: `id`, `title`, `description`, `status` (todo | in_progress | completed), `priority` (low | medium | high), `estimatedPomodoros`, `completedPomodoros`, `dueDate`, `tags`, `createdAt`.
-- `PomodoroSession`: `id`, `taskId`, `type` (work | short_break | long_break), `durationSeconds`, `remainingSeconds`, `isActive`, `isPaused`, `totalCompletedSessions`.
-- `KnowledgeItem`: `id`, `title`, `content`, `category`, `tags`, `updatedAt`, `source`.
-- `ChatMessage`: `id`, `role` (user | assistant), `content`, `suggestedActions` (np. utworzenie zadania, przejście do Pomodoro), `timestamp`.
+#### Kluczowe Encje po refaktoryzacji:
+- `Task`:
+  - `id: string`
+  - `title: string`
+  - `description: string`
+  - `status: 'todo' | 'in_progress' | 'completed'`
+  - `priority: 'low' | 'medium' | 'high'`
+  - `estimatedMinutes: number` (np. 15, 30, 45, 60, 90, 120)
+  - `spentMinutes: number` (przepracowany czas w minutach)
+  - `dueDate: string` (format YYYY-MM-DD)
+  - `category: string`
+  - `createdAt: string`, `updatedAt: string`
 
-#### Weryfikacja i kompilacja:
-- Przetestowanie działania `npm run build` oraz `compile_applet`.
-- Sprawdzenie zgodności kolorów 60/30/10 oraz wytycznych Top Bar Contract i Anti-Slop.
+- `FocusTimer`:
+  - `remainingSeconds: number`
+  - `totalDurationSeconds: number`
+  - `isRunning: boolean`
+  - `activeTaskId: string | null`
+  - `presetMinutes: number[]` ([15, 25, 45, 60])
+
+#### Plan wdrożenia krok po kroku:
+1. Utworzenie `src/data/initialData.ts` z realistycznymi danymi testowymi.
+2. Zaktualizowanie typów zadań (`task.types.ts`) i asystenta (`assistant.types.ts`) na `estimatedMinutes` i `spentMinutes`.
+3. Zaktualizowanie repozytoriów, serwisów filtrujących i hooka `useTasks.ts`.
+4. Przekształcenie modułu Pomodoro w elastyczny `FocusTimer` (hook `useFocusTimer.ts`, komponenty zegara skupienia).
+5. Dostosowanie formularzy `TaskQuickAddModal.tsx` i widoku `TaskItem.tsx` z intuicyjnym selektorem minut.
+6. Zaktualizowanie backendu asystenta `src/server/assistantRouteHandler.ts` do operowania na minutach.
+7. Weryfikacja za pomocą `compile_applet` i `lint_applet`.

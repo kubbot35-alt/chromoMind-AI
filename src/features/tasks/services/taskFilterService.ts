@@ -34,8 +34,8 @@ export class TaskFilterService {
         const priorityWeight = { high: 3, medium: 2, low: 1 };
         return priorityWeight[b.priority] - priorityWeight[a.priority];
       }
-      if (sortBy === 'pomodoros') {
-        return b.estimatedPomodoros - a.estimatedPomodoros;
+      if (sortBy === 'time') {
+        return b.estimatedMinutes - a.estimatedMinutes;
       }
       if (sortBy === 'createdAt') {
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();

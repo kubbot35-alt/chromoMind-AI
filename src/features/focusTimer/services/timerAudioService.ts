@@ -1,4 +1,4 @@
-export class PomodoroAudioService {
+export class TimerAudioService {
   private static audioCtx: AudioContext | null = null;
 
   private static getAudioContext(): AudioContext | null {
@@ -45,7 +45,7 @@ export class PomodoroAudioService {
       osc1.stop(now + 0.5);
       osc2.stop(now + 0.7);
     } catch (e) {
-      console.warn('[PomodoroAudioService] WebAudio playback ignored:', e);
+      console.warn('[TimerAudioService] WebAudio chime ignored:', e);
     }
   }
 }

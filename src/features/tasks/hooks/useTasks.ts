@@ -17,7 +17,7 @@ export function useTasks() {
     title: string;
     description?: string;
     priority?: TaskPriority;
-    estimatedPomodoros?: number;
+    estimatedMinutes?: number;
     category?: string;
     dueDate?: string;
   }) => {
@@ -27,8 +27,8 @@ export function useTasks() {
       description: (taskData.description || '').trim(),
       status: 'todo',
       priority: taskData.priority || 'medium',
-      estimatedPomodoros: Math.max(1, taskData.estimatedPomodoros || 1),
-      completedPomodoros: 0,
+      estimatedMinutes: Math.max(5, taskData.estimatedMinutes || 30),
+      spentMinutes: 0,
       dueDate: taskData.dueDate || new Date(Date.now() + 86400000).toISOString().slice(0, 10),
       category: taskData.category || 'Ogólne',
       createdAt: new Date().toISOString(),
@@ -61,22 +61,23 @@ export function useTasks() {
         return {
           ...task,
           status: newStatus,
+          spentMinutes: newStatus === 'completed' && task.spentMinutes === 0 ? task.estimatedMinutes : task.spentMinutes,
           updatedAt: new Date().toISOString(),
         };
       })
     );
   }, []);
 
-  const incrementTaskPomodoro = useCallback((id: string) => {
+  const recordTaskTime = useCallback((id: string, minutesToAdd: number) => {
     setTasks(prev =>
       prev.map(task => {
         if (task.id !== id) return task;
-        const newCount = task.completedPomodoros + 1;
-        const autoCompleted = newCount >= task.estimatedPomodoros && task.status !== 'completed';
+        const newSpent = task.spentMinutes + minutesToAdd;
+        const shouldComplete = newSpent >= task.estimatedMinutes && task.status === 'todo';
         return {
           ...task,
-          completedPomodoros: newCount,
-          status: autoCompleted ? 'completed' : (task.status === 'todo' ? 'in_progress' : task.status),
+          spentMinutes: newSpent,
+          status: shouldComplete ? 'in_progress' : task.status,
           updatedAt: new Date().toISOString(),
         };
       })
@@ -92,16 +93,16 @@ export function useTasks() {
     const completed = tasks.filter(t => t.status === 'completed').length;
     const inProgress = tasks.filter(t => t.status === 'in_progress').length;
     const todo = tasks.filter(t => t.status === 'todo').length;
-    const totalEstPomodoros = tasks.reduce((sum, t) => sum + t.estimatedPomodoros, 0);
-    const totalCompPomodoros = tasks.reduce((sum, t) => sum + t.completedPomodoros, 0);
+    const totalEstimatedMinutes = tasks.reduce((sum, t) => sum + t.estimatedMinutes, 0);
+    const totalSpentMinutes = tasks.reduce((sum, t) => sum + t.spentMinutes, 0);
 
     return {
       total,
       completed,
       inProgress,
       todo,
-      totalEstPomodoros,
-      totalCompPomodoros,
+      totalEstimatedMinutes,
+      totalSpentMinutes,
       completionRate: total > 0 ? Math.round((completed / total) * 100) : 0,
     };
   }, [tasks]);
@@ -119,7 +120,7 @@ export function useTasks() {
     updateTask,
     deleteTask,
     toggleTaskStatus,
-    incrementTaskPomodoro,
+    recordTaskTime,
     taskStats,
   };
 }

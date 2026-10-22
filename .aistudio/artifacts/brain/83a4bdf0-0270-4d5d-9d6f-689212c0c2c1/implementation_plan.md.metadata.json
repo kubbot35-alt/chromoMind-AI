@@ -1,6 +1,6 @@
 {
-  "summary":  "Kompleksowy plan architektoniczny i wdrożeniowy dla inteligentnego asystenta produktywności (planowanie zadań, zintegrowane Pomodoro oraz inteligentna baza wiedzy i wyszukiwarka) z zachowaniem reguł SOLID, SRP, struktury package-by-feature i palety 60/30/10.",
-  "updatedAt":  "2026-10-22T16:54:52.326887762Z",
+  "summary":  "Plan refaktoryzacji aplikacji ChronoMind AI: usunięcie wszelkich pojęć Pomodoro na rzecz naturalnych jednostek czasu (minuty/godziny), przekształcenie zegara w elastyczny Focus Timer, uporządkowanie danych testowych w src/data/initialData.ts oraz intuicyjny wybór czasu w formularzach.",
+  "updatedAt":  "2026-10-22T17:24:11.688696967Z",
   "requestFeedback":  true,
   "userFacing":  true
 }

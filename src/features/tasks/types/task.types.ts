@@ -8,8 +8,8 @@ export interface Task {
   description: string;
   status: TaskStatus;
   priority: TaskPriority;
-  estimatedPomodoros: number;
-  completedPomodoros: number;
+  estimatedMinutes: number;
+  spentMinutes: number;
   dueDate: string;
   category: string;
   createdAt: string;
@@ -18,4 +18,13 @@ export interface Task {
 
 export type TaskFilter = 'all' | 'todo' | 'in_progress' | 'completed';
 
-export type TaskSortBy = 'dueDate' | 'priority' | 'pomodoros' | 'createdAt';
+export type TaskSortBy = 'dueDate' | 'priority' | 'time' | 'createdAt';
+
+export function formatDuration(minutes: number): string {
+  if (minutes < 60) {
+    return `${minutes} min`;
+  }
+  const hours = Math.floor(minutes / 60);
+  const remaining = minutes % 60;
+  return remaining > 0 ? `${hours}h ${remaining} min` : `${hours}h`;
+}

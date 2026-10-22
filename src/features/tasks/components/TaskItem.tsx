@@ -1,34 +1,35 @@
 import React from 'react';
 import type { Task } from '../types/task.types.ts';
+import { formatDuration } from '../types/task.types.ts';
 import { Check, Clock, Trash2, Play, AlertCircle } from 'lucide-react';
 
 interface TaskItemProps {
   task: Task;
-  isActiveInPomodoro: boolean;
+  isActiveInFocus: boolean;
   onToggleStatus: (id: string) => void;
   onDelete: (id: string) => void;
-  onActivateInPomodoro: (id: string) => void;
+  onActivateInFocus: (id: string) => void;
 }
 
 export const TaskItem: React.FC<TaskItemProps> = ({
   task,
-  isActiveInPomodoro,
+  isActiveInFocus,
   onToggleStatus,
   onDelete,
-  onActivateInPomodoro,
+  onActivateInFocus,
 }) => {
   const isCompleted = task.status === 'completed';
 
   const priorityMeta = {
-    high: { label: 'Wysoki', color: 'text-rose-600', border: 'border-rose-200' },
-    medium: { label: 'Średni', color: 'text-amber-600', border: 'border-amber-200' },
-    low: { label: 'Niski', color: 'text-emerald-600', border: 'border-emerald-200' },
+    high: { label: 'Wysoki', color: 'text-rose-600' },
+    medium: { label: 'Średni', color: 'text-amber-600' },
+    low: { label: 'Niski', color: 'text-emerald-600' },
   }[task.priority];
 
   return (
     <div
       className={`group relative p-4 rounded-xl transition-all duration-150 border ${
-        isActiveInPomodoro
+        isActiveInFocus
           ? 'bg-white ring-2 ring-[#FF6B35] shadow-lg shadow-[#FF6B35]/15 border-transparent'
           : 'bg-white hover:border-slate-300 border-slate-200 shadow-sm'
       }`}
@@ -64,16 +65,16 @@ export const TaskItem: React.FC<TaskItemProps> = ({
               {!isCompleted && (
                 <button
                   type="button"
-                  onClick={() => onActivateInPomodoro(task.id)}
-                  title={isActiveInPomodoro ? 'Aktywne w Pomodoro' : 'Ustaw w zegarze Pomodoro'}
+                  onClick={() => onActivateInFocus(task.id)}
+                  title={isActiveInFocus ? 'Aktywne w zegarze skupienia' : 'Uruchom zegar skupienia dla tego zadania'}
                   className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md transition-all whitespace-nowrap cursor-pointer ${
-                    isActiveInPomodoro
+                    isActiveInFocus
                       ? 'bg-[#FF6B35] text-white shadow-xs'
                       : 'bg-slate-100 text-slate-700 hover:bg-[#FF6B35]/10 hover:text-[#FF6B35]'
                   }`}
                 >
                   <Play className="w-3 h-3 fill-current" />
-                  <span>{isActiveInPomodoro ? 'W toku' : 'Pomodoro'}</span>
+                  <span>{isActiveInFocus ? 'W toku' : 'Skupienie'}</span>
                 </button>
               )}
 
@@ -98,7 +99,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-slate-500 mt-2.5 pt-2 border-t border-slate-100">
             <span className="font-medium text-slate-700">{task.category}</span>
             <span aria-hidden="true" className="text-slate-300">·</span>
-            
+
             {/* Priority with icon + text label */}
             <span className={`inline-flex items-center gap-1 font-medium ${priorityMeta.color}`}>
               <AlertCircle className="w-3 h-3" />
@@ -107,10 +108,13 @@ export const TaskItem: React.FC<TaskItemProps> = ({
 
             <span aria-hidden="true" className="text-slate-300">·</span>
 
-            {/* Pomodoro sessions count */}
+            {/* Natural Time Duration */}
             <span className="inline-flex items-center gap-1 font-mono tabular-nums text-slate-700">
               <Clock className="w-3 h-3 text-[#FF6B35]" />
-              <span>{task.completedPomodoros}/{task.estimatedPomodoros} pomodoro</span>
+              <span>
+                {formatDuration(task.estimatedMinutes)}
+                {task.spentMinutes > 0 && ` (zrobiono: ${formatDuration(task.spentMinutes)})`}
+              </span>
             </span>
 
             <span aria-hidden="true" className="text-slate-300">·</span>

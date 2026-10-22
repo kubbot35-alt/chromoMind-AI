@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import type { ActiveTab, ToastNotification } from './features/shared/types/shared.types.ts';
 import type { SuggestedTaskItem } from './features/assistant/types/assistant.types.ts';
 import type { KnowledgeItem } from './features/knowledge/types/knowledge.types.ts';
+import { formatDuration } from './features/tasks/types/task.types.ts';
 
 import { TopNavBar } from './features/shared/components/TopNavBar.tsx';
 import { SectionHeader } from './features/shared/components/SectionHeader.tsx';
@@ -13,8 +14,8 @@ import { TaskFilterBar } from './features/tasks/components/TaskFilterBar.tsx';
 import { TaskStatistics } from './features/tasks/components/TaskStatistics.tsx';
 import { TaskQuickAddModal } from './features/tasks/components/TaskQuickAddModal.tsx';
 
-import { usePomodoro } from './features/pomodoro/hooks/usePomodoro.ts';
-import { PomodoroWidget } from './features/pomodoro/components/PomodoroWidget.tsx';
+import { useFocusTimer } from './features/focusTimer/hooks/useFocusTimer.ts';
+import { FocusTimerWidget } from './features/focusTimer/components/FocusTimerWidget.tsx';
 
 import { useKnowledge } from './features/knowledge/hooks/useKnowledge.ts';
 import { KnowledgeSearchBar } from './features/knowledge/components/KnowledgeSearchBar.tsx';
@@ -24,7 +25,7 @@ import { KnowledgeAddModal } from './features/knowledge/components/KnowledgeAddM
 import { useAssistant } from './features/assistant/hooks/useAssistant.ts';
 import { AssistantDrawer } from './features/assistant/components/AssistantDrawer.tsx';
 
-import { Plus, Sparkles, BookOpen, Clock, CheckSquare } from 'lucide-react';
+import { Plus, Sparkles } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('tasks');
@@ -57,50 +58,46 @@ export default function App() {
     addTask,
     deleteTask,
     toggleTaskStatus,
-    incrementTaskPomodoro,
+    recordTaskTime,
     taskStats,
   } = useTasks();
 
-  // Pomodoro Domain Hook
+  // Focus Timer Domain Hook
   const {
-    mode: pomodoroMode,
-    isRunning: isPomodoroRunning,
-    formattedTime: pomodoroTime,
-    progressRatio: pomodoroProgress,
-    completedSessionsCount,
+    durationMinutes: focusDurationMinutes,
+    formattedTime: focusTime,
+    progressRatio: focusProgress,
+    isRunning: isFocusRunning,
+    completedSessionsCount: completedFocusCount,
     activeTaskId,
-    startTimer,
-    pauseTimer,
-    resetTimer,
-    switchMode: switchPomodoroMode,
-    selectActiveTask,
-  } = usePomodoro({
-    onSessionComplete: (mode, taskId) => {
-      if (mode === 'work') {
-        if (taskId) {
-          incrementTaskPomodoro(taskId);
-          const taskObj = tasks.find(t => t.id === taskId);
-          addToast(
-            `Ukończono sesję Pomodoro dla zadania: "${taskObj?.title || 'Zadanie'}"!`,
-            'success'
-          );
-        } else {
-          addToast('Ukończono 25-minutową sesję pracy!', 'success');
-        }
+    startTimer: startFocusTimer,
+    pauseTimer: pauseFocusTimer,
+    resetTimer: resetFocusTimer,
+    changeDuration: changeFocusDuration,
+    selectActiveTask: selectFocusActiveTask,
+  } = useFocusTimer({
+    onSessionComplete: (durationMinutes, taskId) => {
+      if (taskId) {
+        recordTaskTime(taskId, durationMinutes);
+        const taskObj = tasks.find(t => t.id === taskId);
+        addToast(
+          `Zarejestrowano ${formatDuration(durationMinutes)} pracy nad zadaniem: "${taskObj?.title || 'Zadanie'}"!`,
+          'success'
+        );
       } else {
-        addToast('Koniec przerwy! Czas na kolejny blok skupienia.', 'info');
+        addToast(`Ukończono ${formatDuration(durationMinutes)} sesji skupienia!`, 'success');
       }
     },
   });
 
   // Knowledge Base Domain Hook
   const {
-    items: knowledgeItems,
     filteredItems: filteredKnowledgeItems,
     searchQuery: knowledgeSearchQuery,
     setSearchQuery: setKnowledgeSearchQuery,
     selectedCategory: knowledgeCategory,
     setSelectedCategory: setKnowledgeCategory,
+    items: knowledgeItems,
     addKnowledgeItem,
     deleteKnowledgeItem,
   } = useKnowledge();
@@ -111,21 +108,23 @@ export default function App() {
       addTask({
         title: suggested.title,
         priority: suggested.priority,
-        estimatedPomodoros: suggested.estimatedPomodoros,
+        estimatedMinutes: suggested.estimatedMinutes,
         category: 'Od Asystenta',
       });
-      addToast(`Dodano zadanie "${suggested.title}" do planera.`, 'success');
+      addToast(`Dodano zadanie "${suggested.title}" (${formatDuration(suggested.estimatedMinutes)}).`, 'success');
     },
     [addTask, addToast]
   );
 
-  const handleActivateTaskInPomodoro = useCallback(
+  const handleActivateTaskInFocus = useCallback(
     (taskId: string) => {
-      selectActiveTask(taskId);
-      setActiveTab('pomodoro');
-      addToast('Zadanie podpięte do zegara Pomodoro.', 'info');
+      const task = tasks.find(t => t.id === taskId);
+      const suggestedMinutes = task ? Math.max(5, task.estimatedMinutes - task.spentMinutes) : 30;
+      selectFocusActiveTask(taskId, suggestedMinutes);
+      setActiveTab('focus');
+      addToast(`Zadanie ustawione w zegarze skupienia (${formatDuration(suggestedMinutes)}).`, 'info');
     },
-    [selectActiveTask, addToast]
+    [tasks, selectFocusActiveTask, addToast]
   );
 
   const {
@@ -138,10 +137,10 @@ export default function App() {
     knowledgeItems,
     activeTaskId,
     handleApplySuggestedTask,
-    handleActivateTaskInPomodoro
+    handleActivateTaskInFocus
   );
 
-  const activePomodoroTask = tasks.find(t => t.id === activeTaskId);
+  const activeFocusTask = tasks.find(t => t.id === activeTaskId);
 
   const handleAskAssistantAboutKnowledge = (item: KnowledgeItem) => {
     setActiveTab('assistant');
@@ -155,7 +154,7 @@ export default function App() {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onQuickAddTask={() => setIsTaskModalOpen(true)}
-        activePomodoroTaskTitle={activePomodoroTask?.title}
+        activeFocusTaskTitle={activeFocusTask?.title}
       />
 
       {/* Main Workspace Viewport */}
@@ -164,8 +163,8 @@ export default function App() {
         {activeTab === 'tasks' && (
           <div className="space-y-6">
             <SectionHeader
-              title="Planer Zadań i Deep Work"
-              description="Organizuj zadania z dekompozycją na interwały Pomodoro, ustalaj priorytety i realizuj pracę w skupieniu."
+              title="Planer Zadań i Czasu Pracy"
+              description="Organizuj codzienne obowiązki, szacuj czas w minutach i godzinach, ustalaj priorytety i realizuj zadania w skupieniu."
               action={
                 <div className="flex items-center gap-2">
                   <button
@@ -209,7 +208,7 @@ export default function App() {
                   activeTaskId={activeTaskId}
                   onToggleStatus={toggleTaskStatus}
                   onDelete={deleteTask}
-                  onActivateInPomodoro={handleActivateTaskInPomodoro}
+                  onActivateInFocus={handleActivateTaskInFocus}
                   onOpenCreateModal={() => setIsTaskModalOpen(true)}
                   hasFilterActive={filter !== 'all' || Boolean(taskSearchQuery.trim())}
                 />
@@ -223,34 +222,34 @@ export default function App() {
                   onSendMessage={sendAssistantMessage}
                   onClearHistory={clearChatHistory}
                   onApplySuggestedTask={handleApplySuggestedTask}
-                  onActivateTaskInPomodoro={handleActivateTaskInPomodoro}
+                  onActivateTaskInFocus={handleActivateTaskInFocus}
                 />
               </div>
             </div>
           </div>
         )}
 
-        {/* TAB 2: Pomodoro Focus View */}
-        {activeTab === 'pomodoro' && (
+        {/* TAB 2: Focus Timer View */}
+        {activeTab === 'focus' && (
           <div className="space-y-6 max-w-4xl mx-auto">
             <SectionHeader
-              title="Zegar Skupienia Pomodoro"
-              description="25 minut nieprzerwanej pracy nad wybranym zadaniem, 5 minut regeneracji. Każdy ukończony cykl automatycznie aktualizuje postęp powiązanego zadania."
+              title="Zegar Skupienia (Focus Timer)"
+              description="Uruchom odliczanie na zaplanowany czas zadania lub wybierz elastyczny blok skupienia (15, 25, 45, 60 min). Ukończony czas automatycznie aktualizuje bilans wykonania zadania."
             />
 
-            <PomodoroWidget
-              mode={pomodoroMode}
-              isRunning={isPomodoroRunning}
-              formattedTime={pomodoroTime}
-              progressRatio={pomodoroProgress}
-              completedSessionsCount={completedSessionsCount}
+            <FocusTimerWidget
+              durationMinutes={focusDurationMinutes}
+              formattedTime={focusTime}
+              progressRatio={focusProgress}
+              isRunning={isFocusRunning}
+              completedSessionsCount={completedFocusCount}
               activeTaskId={activeTaskId}
               tasks={tasks}
-              onStart={startTimer}
-              onPause={pauseTimer}
-              onReset={resetTimer}
-              onSwitchMode={switchPomodoroMode}
-              onSelectTask={selectActiveTask}
+              onStart={startFocusTimer}
+              onPause={pauseFocusTimer}
+              onReset={resetFocusTimer}
+              onChangeDuration={changeFocusDuration}
+              onSelectTask={selectFocusActiveTask}
               onCompleteTask={taskId => {
                 toggleTaskStatus(taskId);
                 addToast('Oznaczono zadanie jako ukończone!', 'success');
@@ -261,28 +260,28 @@ export default function App() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
               <div className="p-4 rounded-xl bg-[#0E1A40] border border-[#1A2D61]">
                 <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-1">
-                  1. Wybierz cel
+                  1. Wybierz zadanie
                 </h4>
                 <p className="text-xs text-slate-300 leading-relaxed">
-                  Podepnij pojedyncze zadanie z listy, aby skupić uwagę na jednym priorytecie.
+                  Podepnij zadanie z listy, a zegar automatycznie ustawi pozostały szacowany czas.
                 </p>
               </div>
 
               <div className="p-4 rounded-xl bg-[#0E1A40] border border-[#1A2D61]">
                 <h4 className="text-xs font-bold text-[#FF6B35] uppercase tracking-wider mb-1">
-                  2. Głęboka praca
+                  2. Czas skupienia
                 </h4>
                 <p className="text-xs text-slate-300 leading-relaxed">
-                  Pracuj przez 25 minut bez sprawdzania poczty, mediów i rozpraszaczy.
+                  Możesz wybrać szybkie bloki 15, 25, 45, 60 minut lub wpisać własny czas trwania.
                 </p>
               </div>
 
               <div className="p-4 rounded-xl bg-[#0E1A40] border border-[#1A2D61]">
                 <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-1">
-                  3. Odpoczynek
+                  3. Bilans wykonania
                 </h4>
                 <p className="text-xs text-slate-300 leading-relaxed">
-                  Po sygnale dźwiękowym odejdź od ekranu na 5 minut, rozciągnij się i nawodnij.
+                  Każda zakończona sesja automatycznie zwiększa zarejestrowany czas pracy nad zadaniem.
                 </p>
               </div>
             </div>
@@ -294,7 +293,7 @@ export default function App() {
           <div className="space-y-6">
             <SectionHeader
               title="Baza Wiedzy i Notatek"
-              description="Szybkie wyszukiwanie materiałów, procedur i dobrych praktyk. Asystent AI wykorzystuje te materiały do precyzyjnych odpowiedzi."
+              description="Szybkie wyszukiwanie materiałów, poradników i wytycznych. Asystent AI wykorzystuje te materiały przy planowaniu i odpowiadaniu na pytania."
               action={
                 <button
                   type="button"
@@ -329,7 +328,7 @@ export default function App() {
           <div className="space-y-6 max-w-4xl mx-auto">
             <SectionHeader
               title="Inteligentny Asystent ChronoMind"
-              description="Twój doradca w zarządzaniu czasem, priorytetach i poszukiwaniu wiedzy. Zadawaj pytania, proś o rozpisanie projektów lub wyszukiwanie notatek."
+              description="Twój doradca w zarządzaniu czasem i poszukiwaniu wiedzy. Zadawaj pytania, proś o rozpisanie zadań z realistycznym czasem w minutach lub przeszukiwanie notatek."
             />
 
             <AssistantDrawer
@@ -338,7 +337,7 @@ export default function App() {
               onSendMessage={sendAssistantMessage}
               onClearHistory={clearChatHistory}
               onApplySuggestedTask={handleApplySuggestedTask}
-              onActivateTaskInPomodoro={handleActivateTaskInPomodoro}
+              onActivateTaskInFocus={handleActivateTaskInFocus}
             />
           </div>
         )}
@@ -350,7 +349,7 @@ export default function App() {
         onClose={() => setIsTaskModalOpen(false)}
         onAddTask={data => {
           addTask(data);
-          addToast(`Utworzono zadanie: "${data.title}"`, 'success');
+          addToast(`Utworzono zadanie: "${data.title}" (${formatDuration(data.estimatedMinutes)})`, 'success');
         }}
       />
 

@@ -7,10 +7,10 @@ interface AssistantQuickPromptChipsProps {
 }
 
 const PROMPT_SUGGESTIONS = [
-  'Zaplanuj mój dzisiejszy dzień pracy',
-  'Rozbij zadanie na sesje Pomodoro 25 min',
+  'Zaplanuj mój dzisiejszy dzień z podziałem na minuty',
+  'Oszacuj czas na załatwienie spraw urzędowych',
   'Jakie mam zadania o wysokim priorytecie?',
-  'Wyszukaj w notatkach: Zasada SRP',
+  'Wyszukaj w notatkach: Zasady Deep Work',
 ];
 
 export const AssistantQuickPromptChips: React.FC<AssistantQuickPromptChipsProps> = ({

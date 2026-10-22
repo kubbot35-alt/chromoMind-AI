@@ -11,7 +11,7 @@ interface AssistantDrawerProps {
   onSendMessage: (text: string) => void;
   onClearHistory: () => void;
   onApplySuggestedTask: (task: SuggestedTaskItem) => void;
-  onActivateTaskInPomodoro: (taskId: string) => void;
+  onActivateTaskInFocus: (taskId: string) => void;
 }
 
 export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
@@ -20,7 +20,7 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
   onSendMessage,
   onClearHistory,
   onApplySuggestedTask,
-  onActivateTaskInPomodoro,
+  onActivateTaskInFocus,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -39,10 +39,10 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
           <div>
             <h3 className="text-sm font-bold text-white flex items-center gap-1.5 font-['Plus_Jakarta_Sans',sans-serif]">
               <span>Asystent ChronoMind</span>
-              <span className="text-[10px] font-normal text-slate-400 font-mono">v2.0</span>
+              <span className="text-[10px] font-normal text-slate-400 font-mono">v2.1</span>
             </h3>
             <p className="text-[11px] text-slate-300">
-              Planowanie, Pomodoro & przeszukiwanie wiedzy
+              Planowanie, zegar skupienia & przeszukiwanie wiedzy
             </p>
           </div>
         </div>
@@ -65,14 +65,14 @@ export const AssistantDrawer: React.FC<AssistantDrawerProps> = ({
             key={msg.id}
             message={msg}
             onApplySuggestedTask={onApplySuggestedTask}
-            onActivateTaskInPomodoro={onActivateTaskInPomodoro}
+            onActivateTaskInFocus={onActivateTaskInFocus}
           />
         ))}
 
         {isLoading && (
           <div className="flex items-center gap-2.5 p-3 rounded-xl bg-white/10 text-slate-300 text-xs animate-pulse max-w-[70%]">
             <Sparkles className="w-4 h-4 text-[#FF6B35] animate-spin" />
-            <span>Asystent analizuje kontekst i generuje odpowiedź...</span>
+            <span>Asystent analizuje zadania i generuje odpowiedź...</span>
           </div>
         )}
 

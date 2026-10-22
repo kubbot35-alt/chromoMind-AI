@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatDuration } from '../types/task.types.ts';
 import { CheckCircle, Clock, Target, ListTodo } from 'lucide-react';
 
 interface TaskStatisticsProps {
@@ -7,8 +8,8 @@ interface TaskStatisticsProps {
     completed: number;
     inProgress: number;
     todo: number;
-    totalEstPomodoros: number;
-    totalCompPomodoros: number;
+    totalEstimatedMinutes: number;
+    totalSpentMinutes: number;
     completionRate: number;
   };
 }
@@ -50,9 +51,12 @@ export const TaskStatistics: React.FC<TaskStatisticsProps> = ({ stats }) => {
           <Clock className="w-4 h-4" />
         </div>
         <div>
-          <p className="text-xs text-slate-400 font-medium">Sesje Pomodoro</p>
+          <p className="text-xs text-slate-400 font-medium">Zarejestrowany czas</p>
           <p className="text-lg font-bold font-mono tabular-nums text-white mt-0.5">
-            {stats.totalCompPomodoros} <span className="text-xs text-slate-400 font-normal">/ {stats.totalEstPomodoros} plan</span>
+            {formatDuration(stats.totalSpentMinutes)}{' '}
+            <span className="text-xs text-slate-400 font-normal">
+              / {formatDuration(stats.totalEstimatedMinutes)}
+            </span>
           </p>
         </div>
       </div>

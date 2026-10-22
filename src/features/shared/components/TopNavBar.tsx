@@ -6,14 +6,14 @@ interface TopNavBarProps {
   activeTab: ActiveTab;
   onTabChange: (tab: ActiveTab) => void;
   onQuickAddTask: () => void;
-  activePomodoroTaskTitle?: string | null;
+  activeFocusTaskTitle?: string | null;
 }
 
 export const TopNavBar: React.FC<TopNavBarProps> = ({
   activeTab,
   onTabChange,
   onQuickAddTask,
-  activePomodoroTaskTitle,
+  activeFocusTaskTitle,
 }) => {
   return (
     <header className="sticky top-0 z-40 bg-[#070D1E]/95 backdrop-blur-md border-b border-[#1A2D61] px-4 lg:px-8 py-3.5 transition-colors">
@@ -43,18 +43,18 @@ export const TopNavBar: React.FC<TopNavBarProps> = ({
           </button>
 
           <button
-            onClick={() => onTabChange('pomodoro')}
+            onClick={() => onTabChange('focus')}
             className={`flex items-center gap-2 pb-1 border-b-2 transition-all whitespace-nowrap shrink-0 cursor-pointer ${
-              activeTab === 'pomodoro'
+              activeTab === 'focus'
                 ? 'text-[#FF6B35] border-[#FF6B35] font-semibold'
                 : 'text-slate-300 border-transparent hover:text-white hover:border-slate-500'
             }`}
           >
             <Clock className="w-4 h-4" />
-            <span>Zegar Pomodoro</span>
-            {activePomodoroTaskTitle && (
+            <span>Zegar skupienia</span>
+            {activeFocusTaskTitle && (
               <span className="text-xs text-[#FF6B35] font-mono tabular-nums truncate max-w-[120px]">
-                ({activePomodoroTaskTitle})
+                ({activeFocusTaskTitle})
               </span>
             )}
           </button>
@@ -108,13 +108,13 @@ export const TopNavBar: React.FC<TopNavBarProps> = ({
           <span>Zadania</span>
         </button>
         <button
-          onClick={() => onTabChange('pomodoro')}
+          onClick={() => onTabChange('focus')}
           className={`text-xs flex flex-col items-center gap-1 ${
-            activeTab === 'pomodoro' ? 'text-[#FF6B35] font-semibold' : 'text-slate-400'
+            activeTab === 'focus' ? 'text-[#FF6B35] font-semibold' : 'text-slate-400'
           }`}
         >
           <Clock className="w-4 h-4" />
-          <span>Pomodoro</span>
+          <span>Skupienie</span>
         </button>
         <button
           onClick={() => onTabChange('knowledge')}
