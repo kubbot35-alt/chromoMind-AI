@@ -1,0 +1,8 @@
+{
+  "name": "ChronoMind AI",
+  "description": "Inteligentny asystent produktywności: hybrydowy planer zadań, zegar Pomodoro połączony z zadaniami oraz inteligentna baza wiedzy i wyszukiwarka.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
